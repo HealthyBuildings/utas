@@ -1,0 +1,98 @@
+---
+title: "UTAS report"
+output: html_document
+---
+
+### Maneuver difficulty
+
+Table 1. Percent failure per maneuver
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+library(plyr)
+library(repmis)
+library(knitr)
+library(zoo)
+library(Hmisc)
+ManeuverLevel<-repmis::source_data("www.dropbox.com/s/37ya7rfalh9b29q/SimulatorProc.csv",sep = "auto",header = TRUE)
+perc.fail.maneuver<-ddply(ManeuverLevel,.(SubManeuver),summarise,perc.fail=100*sum(Grade==1)/length(SubManeuver))
+perc.fail.maneuver<-perc.fail.maneuver[order(-perc.fail.maneuver$perc.fail),]
+perc.fail.maneuver$perc.fail<-format(round(perc.fail.maneuver$perc.fail,2))
+rownames(perc.fail.maneuver)<-NULL
+kable(perc.fail.maneuver, format = "html")
+```
+
+### Analysis of Simulator Data per Maneuver
+
+Objective: Find flight metrics that discriminate pilots' flight performance and 
+associate to cockpit conditions and physiological responses.
+
+###TCAS
+
+In TCAS, changes in **calibrated airspeed** are strongly associated to instructors' grading (Ground truth?).
+
+Absolute changes in air speed compared to air speed at the TCAS beginning: 
+
+####Absolute delta calspeed=|CalibratedAirspeed (t) - CalibratedAirspeed (t=0)|
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+SimulatorProc<-repmis::source_data("https://www.dropbox.com/s/3nbfwagh2bqw18m/ManeuverLevel.csv?dl=0",sep = ",",header = TRUE)
+tcas<-subset(SimulatorProc,Maneuver=="TCAS")
+tcas<-repmis::source_DropboxData("tcas.csv","ununbggz3uyvfsr",sep = ",",header = TRUE)
+library(ggplot2)
+ggplot(tcas,aes(x=systime2,y=delta.calspeed,color=factor(Grade)))+
+geom_smooth(method="loess")+
+theme_classic(base_family="Helvetica",base_size=12)+
+  theme(legend.position="top")+labs(y="Abs Delta Airspeed [m/s?]",x="Time [ms]")+
+  scale_color_manual(values=c("red", "green", "blue"),name="Instructor's\n Grade")
+```
+
+###Departure stall
+
+Metric of interest: Speed recovery time
+
+
+Description: time elapsed from minimum speed point to regaining 75% of the initial air speed 
+
+Longer times were experienced by trials graded 1 and 2
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+ggplot()+
+  geom_point(data=subset(SimulatorProc,Maneuver=="Departure Stall"),alpha=0.1,aes(x=systime2,y=CalibratedAirspeed,group=Session))+
+  facet_grid(Grade~.)+geom_vline(xintercept=1.65e5,color="red")+
+  geom_vline(xintercept=1.3e5,color="green",alpha=0.5)+
+  theme_bw(base_family="Helvetica",base_size=12)+
+  annotate("text",x=1.1e5,y=260,label="start",size=4)+annotate("text",x=1.8e5,y=260,label="end",size=4,color="red")
+```
+
+###Upset Recovery
+
+Metric: Altitude recovery after upset
+
+Description: Approximately 50 seconds after the beginning of the maneuver, altitude values seem to stabilize near the initial altitude (~5000m?) . 
+
+Deviations from this target altitude are the largest in the medium and high co2 conditions
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+ur<-subset(SimulatorProc,Maneuver=="Upset Recovery")
+ur<-ur[order(ur$PID,ur$Session,ur$datetime),]
+ur<-ddply(ur,.(PID,Session),transform, roll.sd.bankangle=rollapply(BankAngle,width=10,align="center",partial=TRUE,FUN=sd))
+
+
+
+ggplot()+
+  geom_line(data=subset(SimulatorProc,Maneuver=="Upset Recovery"),aes(x=systime2,y=Altitude,group=PID,color=factor(Grade)))+
+  #geom_point(data=subset(manx2,Maneuver=="Upset Recovery"&Alarm1==1),aes(x=systime2,y=Sideslip+10),color="purple",size=1.2)+
+  facet_grid(Condition~.)
+
+kable(ddply(subset(SimulatorProc,Maneuver=="Upset Recovery"&systime2>50e3),.(Condition),summarise,Mean_altitude=mean(abs(Altitude),na.rm=TRUE)),format="html")
+
+
+```
+
+Metric: Bank Angle variability
+
+Description: bank angle values oscillate closer to zero degrees 50 seconds after the beginning of the maneuver.
+
+Absolute magnitude and deviation are larger in the medium and high CO2 conditions.
+
+
+
+
+
