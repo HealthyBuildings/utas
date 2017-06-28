@@ -2,7 +2,6 @@
 title: "UTAS report"
 output: html_document
 ---
-No Comment For You
 
 ### Maneuver difficulty
 
@@ -13,6 +12,7 @@ library(knitr)
 library(zoo)
 library(Hmisc)
 library(readr)
+setwd("..")
 ManeuverLevel<-read_csv(gsub(" ","",paste(getwd(),"/Data/ManeuverLevel.csv")))
 perc.fail.maneuver<-ddply(ManeuverLevel,.(SubManeuver),summarise,perc.fail=100*sum(Grade==1)/length(SubManeuver))
 perc.fail.maneuver<-perc.fail.maneuver[order(-perc.fail.maneuver$perc.fail),]
@@ -34,15 +34,17 @@ Absolute changes in air speed compared to air speed at the TCAS beginning:
 
 ####Absolute delta calspeed=|CalibratedAirspeed (t) - CalibratedAirspeed (t=0)|
 ```{r echo=FALSE,message=FALSE,warning=FALSE}
+setwd("..")
 SimulatorProc<-read_csv(gsub(" ","",paste(getwd(),"/Data/SimulatorProc2.csv")))
 tcas<-subset(SimulatorProc,Maneuver=="TCAS")
-tcas<-repmis::source_DropboxData("tcas.csv","ununbggz3uyvfsr",sep = ",",header = TRUE)
+#tcas<-repmis::source_DropboxData("tcas.csv","ununbggz3uyvfsr",sep = ",",header = TRUE)
 library(ggplot2)
-ggplot(tcas,aes(x=systime2,y=delta.calspeed,color=factor(Grade)))+
-geom_smooth(method="loess")+
-theme_classic(base_family="Helvetica",base_size=12)+
-  theme(legend.position="top")+labs(y="Abs Delta Airspeed [m/s?]",x="Time [ms]")+
-  scale_color_manual(values=c("red", "green", "blue"),name="Instructor's\n Grade")
+##MEMO - Fix delta.calspeed
+#ggplot(tcas,aes(x=systime2,y=delta.calspeed,color=factor(Grade)))+
+#geom_smooth(method="loess")+
+#theme_classic(base_family="Helvetica",base_size=12)+
+#  theme(legend.position="top")+labs(y="Abs Delta Airspeed [m/s?]",x="Time [ms]")+
+#  scale_color_manual(values=c("red", "green", "blue"),name="Instructor's\n Grade")
 ```
 
 ###Departure stall
@@ -74,8 +76,6 @@ Deviations from this target altitude are the largest in the medium and high co2 
 ur<-subset(SimulatorProc,Maneuver=="Upset Recovery")
 ur<-ur[order(ur$PID,ur$Session,ur$datetime),]
 ur<-ddply(ur,.(PID,Session),transform, roll.sd.bankangle=rollapply(BankAngle,width=10,align="center",partial=TRUE,FUN=sd))
-
-
 
 ggplot()+
   geom_line(data=subset(SimulatorProc,Maneuver=="Upset Recovery"),aes(x=systime2,y=Altitude,group=PID,color=factor(Grade)))+
