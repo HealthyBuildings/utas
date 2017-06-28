@@ -9,11 +9,13 @@ No Comment For You
 Table 1. Percent failure per maneuver
 ```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
 library(plyr)
-library(repmis)
 library(knitr)
 library(zoo)
 library(Hmisc)
-ManeuverLevel<-repmis::source_data("www.dropbox.com/s/37ya7rfalh9b29q/SimulatorProc.csv",sep = "auto",header = TRUE)
+library(readr)
+wdir <- read_csv("~/Piers's Homework/Harvard/Work/Doctoral/UTC/UTAS/Data/Analysis/Github/utas/wdir.csv", col_names = FALSE)
+setwd(wdir$X1[1])
+ManeuverLevel<-read_csv("Data/ManeuverLevel.csv")
 perc.fail.maneuver<-ddply(ManeuverLevel,.(SubManeuver),summarise,perc.fail=100*sum(Grade==1)/length(SubManeuver))
 perc.fail.maneuver<-perc.fail.maneuver[order(-perc.fail.maneuver$perc.fail),]
 perc.fail.maneuver$perc.fail<-format(round(perc.fail.maneuver$perc.fail,2))
@@ -34,7 +36,9 @@ Absolute changes in air speed compared to air speed at the TCAS beginning:
 
 ####Absolute delta calspeed=|CalibratedAirspeed (t) - CalibratedAirspeed (t=0)|
 ```{r echo=FALSE,message=FALSE,warning=FALSE}
-SimulatorProc<-repmis::source_data("https://www.dropbox.com/s/3nbfwagh2bqw18m/ManeuverLevel.csv?dl=0",sep = ",",header = TRUE)
+wdir <- read_csv("~/Piers's Homework/Harvard/Work/Doctoral/UTC/UTAS/Data/Analysis/Github/utas/wdir.csv", col_names = FALSE)
+setwd(wdir$X1[1])
+SimulatorProc<-read_csv("Data/SimulatorProc.csv")
 tcas<-subset(SimulatorProc,Maneuver=="TCAS")
 tcas<-repmis::source_DropboxData("tcas.csv","ununbggz3uyvfsr",sep = ",",header = TRUE)
 library(ggplot2)
