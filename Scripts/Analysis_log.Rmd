@@ -14,7 +14,7 @@ library(Hmisc)
 library(readr)
 setwd("..")
 ManeuverLevel<-read_csv(gsub(" ","",paste(getwd(),"/Data/ManeuverLevel.csv")))
-perc.fail.maneuver<-ddply(ManeuverLevel,.(SubManeuver),summarise,perc.fail=100*sum(Grade==1)/length(SubManeuver))
+perc.fail.maneuver<-ddply(ManeuverLevel,.(SubManeuver),summarise,perc.fail=100*sum(Grade==1)/length(SubManeuver), Difficulty=Difficulty[1])
 perc.fail.maneuver<-perc.fail.maneuver[order(-perc.fail.maneuver$perc.fail),]
 perc.fail.maneuver$perc.fail<-format(round(perc.fail.maneuver$perc.fail,2))
 rownames(perc.fail.maneuver)<-NULL
@@ -36,6 +36,8 @@ Absolute changes in air speed compared to air speed at the TCAS beginning:
 ```{r echo=FALSE,message=FALSE,warning=FALSE}
 setwd("..")
 SimulatorProc<-read_csv(gsub(" ","",paste(getwd(),"/Data/SimulatorProc2.csv")))
+SimulatorProc$BankAngle <- as.numeric(SimulatorProc$BankAngle)
+SimulatorProc$AltitudeDev <- as.numeric(SimulatorProc$AltitudeDev)
 tcas<-subset(SimulatorProc,Maneuver=="TCAS")
 #tcas<-repmis::source_DropboxData("tcas.csv","ununbggz3uyvfsr",sep = ",",header = TRUE)
 library(ggplot2)
@@ -51,8 +53,9 @@ library(ggplot2)
 
 Metric of interest: Speed recovery time
 
-
 Description: time elapsed from minimum speed point to regaining 75% of the initial air speed 
+
+Relation to Instructor Ratings:
 
 Longer times were experienced by trials graded 1 and 2
 ```{r echo=FALSE,message=FALSE,warning=FALSE}
@@ -64,6 +67,10 @@ ggplot()+
   annotate("text",x=1.1e5,y=260,label="start",size=4)+annotate("text",x=1.8e5,y=260,label="end",size=4,color="red")
 ```
 
+Relation to CO2 Conditions:
+
+YY
+
 ###Upset Recovery
 
 Metric: Altitude recovery after upset
@@ -71,6 +78,12 @@ Metric: Altitude recovery after upset
 Description: Approximately 50 seconds after the beginning of the maneuver, altitude values seem to stabilize near the initial altitude (~5000m?) . 
 
 Deviations from this target altitude are the largest in the medium and high co2 conditions
+
+Relation to Instructor Ratings:
+
+YY
+
+Relation to CO2 Conditions:
 
 ```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
 ur<-subset(SimulatorProc,Maneuver=="Upset Recovery")
@@ -83,8 +96,6 @@ ggplot()+
   facet_grid(Condition~.)
 
 kable(ddply(subset(SimulatorProc,Maneuver=="Upset Recovery"&systime2>50e3),.(Condition),summarise,Mean_altitude=mean(abs(Altitude),na.rm=TRUE)),format="html")
-
-
 ```
 
 Metric: Bank Angle variability
@@ -93,7 +104,21 @@ Description: bank angle values oscillate closer to zero degrees 50 seconds after
 
 Absolute magnitude and deviation are larger in the medium and high CO2 conditions.
 
+###Circle to Land
 
+Metric: Maintain altitude during circle to land
 
+Description: Absolute deviation from 700 ft during circle to land
 
+Relation to Instructor Ratings:
 
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+kable(ddply(subset(SimulatorProc,SubManeuver=="Circle to Land" & is.na(Grade)==F),.(Grade),summarise,Mean_Deviation=mean(AltitudeDev,na.rm=TRUE)),format="html")
+```
+
+Relation to CO2 Conditions:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+ggplot()+
+  stat_smooth(data=subset(SimulatorProc,SubManeuver=="Circle to Land"),aes(x=systime2,y=AltitudeDev,color=factor(Condition)))
+```
