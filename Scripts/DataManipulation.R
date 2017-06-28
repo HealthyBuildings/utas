@@ -30,10 +30,3 @@ SimulatorProc2 <- ddply(SimulatorProc2, .(ManeuverNum), .fun=DeviationsProc)
 
   #Write SimulatorProc2 to csv
 write.csv(SimulatorProc2, gsub(" ","",paste(getwd(),"/utas/Data/SimulatorProc2.csv")))
-
-Landing <- subset(SimulatorProc2,SubManeuver=="Landing")
-ManeuverTime = function(x){
-  x$systime3 = x$SysTime-x$SysTime[1]
-  return(x)
-}
-Landing <- ddply(Landing,.(ManeuverNum), .fun=ManeuverTime)

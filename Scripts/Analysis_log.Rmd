@@ -119,8 +119,82 @@ kable(ddply(subset(SimulatorProc,SubManeuver=="Circle to Land" & is.na(Grade)==F
 Relation to CO2 Conditions:
 
 ```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
-ggplot()+
-  stat_smooth(data=subset(SimulatorProc,SubManeuver=="Circle to Land"),aes(x=systime2,y=AltitudeDev,color=factor(Condition)))
+CircleToLand <- subset(SimulatorProc,SubManeuver=="Circle to Land")
+ManeuverTime = function(x){
+  x$systime3 = x$SysTime-x$SysTime[1]
+  return(x)
+}
+CircleToLand <- ddply(CircleToLand,.(ManeuverNum), .fun=ManeuverTime)
+ggplot()+ xlim(0,120000)+
+  stat_smooth(data=CircleToLand, aes(x=systime3,y=AltitudeDev,color=factor(Condition)))
+```
+
+###Takeoff
+
+Metric: Bank angle during takeoff
+
+Description: Absolute deviation from 0 during takoff, up to 400 ft
+
+Relation to Instructor Ratings:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+Takeoff <- subset(SimulatorProc,SubManeuver=="Takeoff")
+Takeoff <- ddply(Takeoff,.(ManeuverNum), .fun=ManeuverTime)
+ggplot()+ xlim(0,50000)+
+  stat_smooth(data=subset(Takeoff, is.na(Grade)==F),aes(x=systime3,y=BankAngleDev,color=factor(Grade)))
+```
+
+Relation to CO2 Conditions:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+ggplot()+ xlim(0,50000)+
+  stat_smooth(data=Takeoff,aes(x=systime3,y=BankAngleDev,color=factor(Condition)))
+```
+
+###Area Departure with Engine Fire
+
+Metric: Constant Rate of Ascent from 400ft to 1500ft
+
+Description: Absolute deviation from pitch attitude of 15
+
+Relation to Instructor Ratings:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+AreaDeparture <- subset(SimulatorProc,SubManeuver=="Area Departure")
+AreaDeparture <- ddply(AreaDeparture,.(ManeuverNum), .fun=ManeuverTime)
+ggplot()+ xlim(0,50000)+
+  stat_smooth(data=subset(AreaDeparture, is.na(Grade)==F & Maneuver=="Engine Fire"),aes(x=systime3,y=Altitude,color=factor(Grade)))
+
+kable(ddply(subset(AreaDeparture, is.na(Grade)==F & Maneuver=="Engine Fire"),.(Grade),summarise,Mean_Deviation=mean(PitchAttitudeDev,na.rm=TRUE)),format="html")
+```
+
+Relation to CO2 Conditions:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+kable(ddply(subset(AreaDeparture, is.na(Grade)==F & Maneuver=="Engine Fire"),.(Condition),summarise,Mean_Deviation=mean(PitchAttitudeDev,na.rm=TRUE)),format="html")
+```
+
+###Steep Turns
+
+Metric: Bank Angle of 45 Degrees
+
+Description: Deviation from 45 degrees while in steep turns
+
+Relation to Instructor Ratings:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+SteepTurns <- subset(SimulatorProc,SubManeuver=="Steep Turns")
+SteepTurns <- ddply(SteepTurns,.(ManeuverNum), .fun=ManeuverTime)
+kable(ddply(SteepTurns,.(Grade),summarise,Mean_Deviation=mean(BankAngleDev,na.rm=TRUE)),format="html")
+```
+
+Relation to CO2 Conditions:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+ggplot()+ xlim(0,140000)+
+  stat_smooth(data=SteepTurns,aes(x=systime3,y=BankAngle,color=factor(Condition)))
+
+kable(ddply(SteepTurns,.(Condition),summarise,Mean_Deviation=mean(BankAngleDev,na.rm=TRUE)),format="html")
 ```
 
 ###Landing
