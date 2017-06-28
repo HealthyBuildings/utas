@@ -122,3 +122,30 @@ Relation to CO2 Conditions:
 ggplot()+
   stat_smooth(data=subset(SimulatorProc,SubManeuver=="Circle to Land"),aes(x=systime2,y=AltitudeDev,color=factor(Condition)))
 ```
+
+###Landing
+
+Metric: Bank angle during final approach and landing
+
+Description: Absolute deviation from 0 during landing
+
+Relation to Instructor Ratings:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+Landing <- subset(SimulatorProc,SubManeuver=="Landing")
+ManeuverTime = function(x){
+  x$systime3 = x$SysTime-x$SysTime[1]
+  return(x)
+}
+Landing <- ddply(Landing,.(ManeuverNum), .fun=ManeuverTime)
+ggplot()+ xlim(0,50000)+
+  stat_smooth(data=subset(Landing, is.na(Grade)==F),aes(x=systime3,y=BankAngleDev,color=factor(Grade)))
+```
+
+Relation to CO2 Conditions:
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+ggplot()+ xlim(0,50000)+
+  stat_smooth(data=Landing,aes(x=systime3,y=BankAngleDev,color=factor(Condition)))
+```
+
