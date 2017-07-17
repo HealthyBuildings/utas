@@ -50,7 +50,7 @@ summary(mod1$gam)
 ##and places coefficients in a table
 
   #Create Table with Maneuvers to Model
-PerfManeuvers <- ManeuverLevel[c(2,3,6,8,10:11,13,15:16,19,21:25),c("Maneuver","SubManeuver")]
+PerfManeuvers <- ManeuverLevel[c(1:2,7:9,11,13:14,17,19,21:24),c("Maneuver","SubManeuver")]
 PerfManeuvers$EstimateMed <- NA
 PerfManeuvers$PvalueMed <- NA
 PerfManeuvers$EstimateHigh <- NA
